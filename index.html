@@ -1,0 +1,1513 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Educational Platform — المنصة التعليمية الذكية</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --surface: #111827;
+      --surface-2: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --primary: #0ea5e9;
+      --primary-hover: #0284c7;
+      --accent: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --border: rgba(148, 163, 184, 0.18);
+      --radius: 14px;
+    }
+
+    body.light-theme {
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --text: #0f172a;
+      --muted: #475569;
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --accent: #16a34a;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --border: rgba(15, 23, 42, 0.12);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+      transition: background 0.25s ease, color 0.25s ease;
+    }
+
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 18px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.96rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--primary);
+      color: #fff;
+      transition: transform 0.12s ease, background 0.2s ease, opacity 0.2s ease;
+    }
+
+    .btn:hover:not(:disabled) { background: var(--primary-hover); transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-sm { padding: 7px 12px; font-size: 0.85rem; }
+    .btn-secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+    .btn-accent { background: var(--accent); color: #fff; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-warning { background: var(--warning); color: #0f172a; }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 0.96rem;
+      margin-top: 6px;
+      margin-bottom: 12px;
+      outline: none;
+    }
+
+    input[readonly] {
+      opacity: 0.78;
+      cursor: not-allowed;
+      border-style: dashed;
+    }
+
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+
+    .locked-note {
+      font-size: 0.84rem;
+      color: var(--accent);
+      margin-top: -6px;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    .alert {
+      padding: 12px 14px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+      font-size: 0.92rem;
+      display: none;
+    }
+    .alert-error { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: #fca5a5; }
+    body.light-theme .alert-error { color: #991b1b; }
+    .alert-success { background: rgba(34, 197, 94, 0.15); border: 1px solid var(--accent); color: #86efac; }
+    body.light-theme .alert-success { color: #166534; }
+
+    .auth-wrapper {
+      max-width: 480px;
+      margin: 40px auto;
+    }
+
+    .rate-box {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      font-size: 0.88rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 18px;
+    }
+
+    .user-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--surface-2);
+      border: 2px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 10px;
+      background: var(--surface-2);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .tab-btn {
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .chat-box {
+      height: 330px;
+      overflow-y: auto;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .msg {
+      padding: 10px 14px;
+      border-radius: 12px;
+      max-width: 82%;
+      white-space: pre-wrap;
+      font-size: 0.94rem;
+    }
+    .msg-user { align-self: flex-start; background: var(--primary); color: #fff; }
+    .msg-ai { align-self: flex-end; background: var(--surface); border: 1px solid var(--border); }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .quiz-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 16px;
+      background: var(--surface-2);
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .quiz-controls label {
+      margin: 0;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .quiz-controls input[type="number"] {
+      width: 95px;
+      margin: 0;
+      padding: 8px 10px;
+    }
+
+    .mcq-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-top: 8px;
+      cursor: pointer;
+      background: var(--surface-2);
+    }
+
+    .account-item {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px;
+      border-radius: 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      margin-bottom: 10px;
+    }
+
+    .account-item.active-acc {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.35);
+    }
+
+    .badge-active {
+      background: rgba(34, 197, 94, 0.18);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .footer-credit {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-top: 24px;
+      padding-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Auth Card -->
+    <div id="auth-section" class="auth-wrapper card">
+      <h2 style="margin-bottom: 6px;">Smart Educational Platform</h2>
+      <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 14px;">
+        تسجيل الدخول الآمن برقم الهاتف والاسم الحقيقي — بإشراف وتطوير: <strong>عبد المهيمن حازم زيد</strong>
+      </p>
+
+      <div class="rate-box">
+        <span>حد المحاولات: غير نهائي (∞)</span>
+        <span id="attempts-remaining">المحاولات: غير محدودة</span>
+      </div>
+
+      <div id="auth-error" class="alert alert-error"></div>
+      <div id="auth-success" class="alert alert-success"></div>
+
+      <div id="step-phone">
+        <label for="phone-input">رقم الهاتف (مع رمز الدولة)</label>
+        <input id="phone-input" type="tel" placeholder="+9647776525482" value="+9647776525482" oninput="syncLockedNameForPhone()" />
+
+        <label for="full-name-input">الاسم الثلاثي / الحقيقي</label>
+        <input id="full-name-input" type="text" placeholder="مثال: عبد المهيمن حازم زيد" />
+        <div id="locked-name-notice" class="locked-note"></div>
+
+        <label for="avatar-input">الصورة الرمزية (اختياري)</label>
+        <input id="avatar-input" type="file" accept="image/*" />
+
+        <div id="recaptcha-container"></div>
+
+        <button id="send-otp-btn" class="btn" style="width: 100%;" onclick="requestPhoneOTP()">
+          📲 إرسال كود التحقق إلى الرقم
+        </button>
+      </div>
+
+      <div id="step-otp" style="display: none;">
+        <p id="otp-hint" style="color: var(--muted); font-size: 0.9rem; margin-bottom: 10px;"></p>
+        <label for="otp-input">رمز التحقق (OTP من 6 أرقام)</label>
+        <input id="otp-input" type="text" maxlength="6" placeholder="123456" />
+
+        <button id="verify-otp-btn" class="btn btn-accent" style="width: 100%; margin-bottom: 8px;" onclick="verifyPhoneOTP()">
+          ✅ تأكيد الكود والدخول
+        </button>
+        <button class="btn btn-secondary" style="width: 100%;" onclick="backToPhoneStep()">
+          ↩️ تغيير رقم الهاتف
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Platform -->
+    <div id="app-section" style="display: none;">
+      <div class="topbar">
+        <div class="user-badge">
+          <div id="header-avatar" class="avatar">👤</div>
+          <div>
+            <div id="header-name" style="font-weight: 700; font-size: 1.05rem;">طالب</div>
+            <div id="header-phone" style="color: var(--muted); font-size: 0.85rem;"></div>
+            <div style="font-size: 0.88rem; margin-top: 2px;">
+              المستوى: <strong id="header-level">1</strong> / 100 — الخبرة (XP): <strong id="header-xp">0</strong>
+            </div>
+            <div class="progress-bar" style="width: 240px;">
+              <div id="header-xp-bar" class="progress-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn btn-secondary" onclick="toggleTheme()">🌓 تبديل المظهر</button>
+          <button class="btn btn-danger" onclick="logoutUser()">🚪 خروج</button>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('quiz', this)">📝 الاختبارات وبنك الأسئلة</button>
+        <button class="tab-btn" onclick="switchTab('ai', this)">🤖 المساعد الذكي</button>
+        <button class="tab-btn" onclick="switchTab('generator', this)">📄 توليد MCQ من ملف/صورة</button>
+        <button class="tab-btn" onclick="switchTab('accounts', this)">📋 قائمة الحسابات المسجلة</button>
+        <button class="tab-btn" onclick="switchTab('profile', this)">👤 الملف الشخصي والإعدادات</button>
+      </div>
+
+      <!-- Tab 1: Quiz -->
+      <div id="tab-quiz" class="tab-panel active card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+          <h3>الاختبارات التفاعلية (بنك الأسئلة + الأسئلة المولّدة)</h3>
+        </div>
+
+        <div class="quiz-controls">
+          <label for="quiz-count-input">عدد الأسئلة المطلوبة يدوياً:</label>
+          <input id="quiz-count-input" type="number" min="1" max="100" value="5" />
+          <button class="btn btn-secondary" onclick="startQuizSession()">🔄 اختبار جديد</button>
+          <span id="quiz-pool-info" style="color: var(--muted); font-size: 0.86rem;"></span>
+        </div>
+
+        <div id="quiz-container"></div>
+      </div>
+
+      <!-- Tab 2: AI Assistant -->
+      <div id="tab-ai" class="tab-panel card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+          <h3>المساعد التعليمي الذكي (Gemini AI حقيقي)</h3>
+          <button class="btn btn-secondary" onclick="toggleGeminiKeyBox()">🔑 إعداد مفتاح الذكاء الاصطناعي</button>
+        </div>
+
+        <div id="gemini-key-box" style="display: none; background: var(--surface-2); padding: 12px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 12px;">
+          <label for="gemini-api-key-input">مفتاح Gemini API Key (يُحفظ محلياً في متصفحك)</label>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <input id="gemini-api-key-input" type="password" placeholder="AIza..." style="margin: 0; flex: 1; min-width: 200px;" />
+            <button class="btn btn-accent" onclick="saveGeminiApiKey()">حفظ المفتاح</button>
+          </div>
+        </div>
+
+        <div id="chat-box" class="chat-box">
+          <div class="msg msg-ai">مرحباً بك في Smart Educational Platform! اسألني عن مادة الجرائم أو أي موضوع دراسي وسأجيبك بذكاء اصطناعي حقيقي.</div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <input id="ai-input" type="text" style="margin: 0;" placeholder="اكتب سؤالك هنا..." onkeydown="if(event.key==='Enter') sendAIMessage()" />
+          <button id="ai-send-btn" class="btn" onclick="sendAIMessage()">إرسال</button>
+        </div>
+      </div>
+
+      <!-- Tab 3: MCQ Generator -->
+      <div id="tab-generator" class="tab-panel card">
+        <h3 style="margin-bottom: 10px;">توليد أسئلة اختيار من متعدد (MCQ) من نص أو ملف أو صورة</h3>
+        <div class="grid-2">
+          <div>
+            <label for="mcq-file-input">رفع ملف نصي (.txt) أو صورة</label>
+            <input id="mcq-file-input" type="file" accept=".txt,image/*" onchange="handleMCQFileUpload(event)" />
+          </div>
+          <div>
+            <label for="mcq-count-input">عدد الأسئلة المطلوبة يدوياً</label>
+            <input id="mcq-count-input" type="number" min="1" max="100" value="5" />
+          </div>
+        </div>
+        <label for="mcq-source-text">النص الدراسي المصدر</label>
+        <textarea id="mcq-source-text" rows="5" placeholder="الصق نصاً تعليمياً هنا أو اختر ملفاً..."></textarea>
+        <button class="btn btn-accent" onclick="generateMCQFromSource()">✨ توليد أسئلة MCQ وإضافتها للاختبار</button>
+        <div id="generated-mcq-preview" style="margin-top: 16px;"></div>
+      </div>
+
+      <!-- Tab 4: Registered Accounts List -->
+      <div id="tab-accounts" class="tab-panel card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
+          <div>
+            <h3>قائمة الحسابات المسجلة</h3>
+            <p style="color: var(--muted); font-size: 0.88rem;">
+              الاسم ومعلومات الرقم محفوظة بشكل دائم ولا تختفي عند التحديث — والاسم مقفل من الخارج ولا يتغير إلا من داخل الحساب.
+            </p>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="openAddNewAccountScreen()">➕ تسجيل حساب جديد</button>
+        </div>
+        <div id="registered-accounts-list"></div>
+      </div>
+
+      <!-- Tab 5: Profile & Settings -->
+      <div id="tab-profile" class="tab-panel card">
+        <h3 style="margin-bottom: 12px;">الملف الشخصي والتقدم (المستويات 1–100)</h3>
+        <label for="edit-name-input">تعديل الاسم الحقيقي (متاح من داخل الحساب فقط)</label>
+        <input id="edit-name-input" type="text" />
+
+        <label for="edit-avatar-input">تحديث الصورة الرمزية</label>
+        <input id="edit-avatar-input" type="file" accept="image/*" onchange="handleEditAvatar(event)" />
+
+        <button class="btn" onclick="saveProfileChanges()">💾 حفظ التعديلات</button>
+        <div id="profile-stats" style="margin-top: 16px; color: var(--muted); font-size: 0.92rem;"></div>
+      </div>
+    </div>
+
+    <div class="footer-credit">
+      Smart Educational Platform — تطوير: عبد المهيمن حازم زيد
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDJac3IenzpYtS4delIcOTyLL1IxcyOq1c",
+      authDomain: "smart-6b48e.firebaseapp.com",
+      projectId: "smart-6b48e",
+      storageBucket: "smart-6b48e.firebasestorage.app",
+      messagingSenderId: "228018008289",
+      appId: "1:228018008289:web:37df1f73572214428ec7a0",
+      measurementId: "G-NTQL5WTSL4"
+    };
+
+    const GEMINI_KEY_STORAGE = "sep_gemini_api_key_v1";
+    const RATE_STORAGE_KEY = "sep_rate_limit_v1";
+    const ACTIVE_USER_KEY = "sep_active_user_v1";
+    const ACCOUNTS_LIST_KEY = "sep_registered_accounts_v1";
+    const LOCKED_ACCOUNTS_KEY = "sep_locked_accounts_vault_v1";
+    const PHONE_RECORDS_KEY = "sep_phone_records_v1";
+    const PERMANENT_PHONE_VAULT_KEY = "sep_permanent_phone_vault_v1";
+    const THEME_STORAGE_KEY = "sep_theme_v1";
+
+    let firebaseAuthInstance = null;
+    let confirmationResultObj = null;
+    let simulatedOTPCode = "";
+    let pendingPhoneNumber = "";
+    let pendingAvatarDataUrl = "";
+    let currentUserProfile = null;
+    let chatHistory = [];
+
+    function initFirebaseSafely() {
+      try {
+        if (window.firebase && firebaseConfig && firebaseConfig.apiKey) {
+          const app = (!firebase.apps || !firebase.apps.length)
+            ? firebase.initializeApp(firebaseConfig)
+            : firebase.app();
+          firebaseAuthInstance = firebase.auth(app);
+        }
+      } catch (e) {
+        console.warn("Firebase init warning:", e);
+        firebaseAuthInstance = null;
+      }
+    }
+
+    initFirebaseSafely();
+
+    const BASE_QUESTIONS = [
+      { id: 1, category: "مادة الجرائم", question: "1- ماذا تعني كلمة «جرم» في اللغة العربية؟", options: ["القطع والكسب والإثم", "التسامح والعفو", "الصلح والتحكيم", "الشهادة واليمين"], answer: 0 },
+      { id: 2, category: "مادة الجرائم", question: "2- عرّف علم الاجتماع الجريمة بأنها:", options: ["مخالفة نص دستوري فقط", "سلوك منحرف يضر بالمجتمع ويخالف معاييره السائدة", "خطأ مدني يوجب التعويض المالي فقط", "مخالفة إدارية داخل مؤسسة"], answer: 1 },
+      { id: 3, category: "مادة الجرائم", question: "3- يركز التفسير النفسي للجريمة غالباً على:", options: ["الاضطرابات النفسية والدوافع اللاشعورية والصراعات الداخلية", "أسعار السلع في السوق", "المناخ والطقس فقط", "عدد السكان في المدينة"], answer: 0 },
+      { id: 4, category: "مادة الجرائم", question: "4- ما المقصود بالمعنى العدالي في الجريمة؟", options: ["إلغاء العقوبة مطلقاً", "الاعتداء على حق أو مصلحة يحميها العدل والنظام العام", "إدانة المتهم دون دليل", "الاكتفاء باللوم الاجتماعي"], answer: 1 },
+      { id: 5, category: "مادة الجرائم", question: "5- تعالج الجريمة في علم الشريعة الإسلامية من حيث:", options: ["الحدود والقصاص والتعزير وحقوق العباد", "القوانين البحرية فقط", "الأنظمة المصرفية الحديثة فقط", "قواعد المرور الدولية"], answer: 0 },
+      { id: 6, category: "مادة الجرائم", question: "6- ما الفرق الجوهري بين «الجريمة» و«الخطيئة»؟", options: ["لا فرق بينهما مطلقاً", "الجريمة مخالفة قانونية أو اجتماعية ذات أثر عام، بينما الخطيئة ذات طابع ديني أو أخلاقي غالباً", "الخطيئة أشد عقوبة من الجريمة دائماً", "الجريمة لا تقع إلا بالإهمال"], answer: 1 },
+      { id: 7, category: "مادة الجرائم", question: "7- يُقصد بـ«الركن القانوني» للجريمة:", options: ["وجود نص يجرّم الفعل ويحدد عقوبته (لا جريمة ولا عقوبة إلا بنص)", "حالة الغضب لدى الجاني", "وجود شاهد واحد فقط", "وقوع الضرر المادي فقط"], answer: 0 },
+      { id: 8, category: "مادة الجرائم", question: "8- يتكون «الركن المادي» للجريمة من:", options: ["النية فقط", "السلوك الإجرامي، والنتيجة الإجرامية، والرابطة السببية", "الدافع النبيل فقط", "الاعتراف أمام الشرطة فقط"], answer: 1 },
+      { id: 9, category: "مادة الجرائم", question: "9- يُقصد بـ«الركن المعنوي» للجريمة:", options: ["مكان وقوع الجريمة", "القصد الجنائي أو الخطأ غير العمدي وإرادة السلوك", "قيمة المسروقات", "مدة التقادم"], answer: 1 },
+      { id: 10, category: "مادة الجرائم", question: "10- أي مما يأتي يُعد من أركان الجريمة العامة في القانون الجنائي؟", options: ["الركن القانوني والمادي والمعنوي", "الركن التجاري والمدني والإداري", "الركن الجغرافي فقط", "الركن المالي فقط"], answer: 0 },
+      { id: 11, category: "مادة الجرائم", question: "11- «القصد الجنائي» يعني:", options: ["انعدام العلم والتمييز", "العلم بعناصر الجريمة واتجاه الإرادة إلى ارتكابها أو تحقيق نتيجتها", "النسيان العارض", "الإكراه المادي الملجئ"], answer: 1 },
+      { id: 12, category: "مادة الجرائم", question: "12- في الجرائم غير العمدية، يقوم الركن المعنوي على:", options: ["سبق الإصرار والترصد", "الخطأ كالإهمال أو الرعونة أو عدم مراعاة القوانين والأنظمة", "الرغبة في الانتقام", "التخطيط المسبق للجريمة"], answer: 1 },
+      { id: 13, category: "مادة الجرائم", question: "13- تُصنّف الجرائم بحسب جسامتها في كثير من التشريعات إلى:", options: ["جنايات، وجنح، ومخالفات", "جرائم داخلية وخارجية فقط", "جرائم فردية وجماعية فقط", "جرائم مالية وأدبية فقط"], answer: 0 },
+      { id: 14, category: "مادة الجرائم", question: "14- الجرائم «السياسية» هي الجرائم التي:", options: ["تستهدف النظام السياسي أو أمن الدولة من حيث كيانها السياسي", "تقع في المحلات التجارية", "تتعلق بالملكية العقارية الخاصة", "تحدث بسبب أخطاء طبية"], answer: 0 },
+      { id: 15, category: "مادة الجرائم", question: "15- الجرائم «العسكرية» تختص غالباً بـ:", options: ["مخالفة الأنظمة والواجبات العسكرية من قبل العسكريين", "النزاعات الإيجارية", "قضايا الأحوال الشخصية", "المخالفات البلدية"], answer: 0 },
+      { id: 16, category: "مادة الجرائم", question: "16- ما المقصود بالجرائم «المستمرة»؟", options: ["الجرائم التي تقع وتنتهي في لحظة واحدة", "الجرائم التي يتجدد فيها السلوك أو يستمر فيها الحالة الإجرامية فترة من الزمن", "الجرائم التي لا تقع إلا ليلاً", "الجرائم التي لا عقوبة لها"], answer: 1 },
+      { id: 17, category: "مادة الجرائم", question: "17- تُعد الجريمة «وقتية» إذا:", options: ["استمرت سنوات دون توقف", "تحققت عناصرها في فترة زمنية قصيرة أو لحظة محددة", "وقعت خارج البلاد فقط", "اشترك فيها أكثر من عشرة أشخاص"], answer: 1 },
+      { id: 18, category: "مادة الجرائم", question: "18- الجرائم «الاقتصادية» تمس:", options: ["النظام الاقتصادي والمالي والإنتاج والتداول والأسواق", "الحقوق العائلية فقط", "المسائل اللغوية", "الرياضات المدرسية"], answer: 0 },
+      { id: 19, category: "مادة الجرائم", question: "19- من صور الجرائم «المعلوماتية / السيبرانية»:", options: ["الدخول غير المشروع أو تعطيل الأنظمة والبيانات الإلكترونية", "السرقة بالإكراه في الطريق العام", "القتل الخطأ بحادث سير", "التشاجر بالأيدي"], answer: 0 },
+      { id: 20, category: "مادة الجرائم", question: "20- «الشروع» في الجريمة يتحقق عندما:", options: ["يفكر الشخص في الجريمة دون أي فعل", "يبدأ الفاعل بتنفيذ فعل بقصد ارتكاب جناية أو جنحة ثم يوقف أو يخيب لأسباب لا دخل لإرادته فيها", "تنتهي الجريمة وتتحقق نتيجتها كاملة", "يتصالح المجني عليه مع الجاني"], answer: 1 },
+      { id: 21, category: "مادة الجرائم", question: "21- الفرق بين «الفاعل الأصلي» و«الشريك» هو أن الفاعل الأصلي:", options: ["يرتكب الفعل المكون للجريمة أو يساهم مباشرة في تنفيذه", "لا يعلم بوقوع الجريمة مطلقاً", "يقتصر دوره على الإبلاغ فقط", "يكون دائماً خارج البلاد"], answer: 0 },
+      { id: 22, category: "مادة الجرائم", question: "22- من صور «الاشتراك التبعي» في الجريمة:", options: ["التحريض أو الاتفاق أو المساعدة على ارتكابها", "تنفيذ الركن المادي كاملاً بمفرده", "صدور حكم البراءة", "انقضاء الدعوى بالوفاة"], answer: 0 },
+      { id: 23, category: "مادة الجرائم", question: "23- «أسباب الإباحة» تجعل الفعل المباح:", options: ["مشروعاً وغير معاقب عليه (مثل الدفاع الشرعي بشروطه)", "جريمة مشددة العقوبة", "موجباً للتعويض دائماً رغم مشروعيته", "مخالفاً للنظام العام"], answer: 0 },
+      { id: 24, category: "مادة الجرائم", question: "24- من أبرز شروط «الدفاع الشرعي»:", options: ["أن يكون الخطر حالاً وغير مشروع ولا يمكن دفعه إلا بالقدر اللازم", "أن يكون الاعتداء قد انتهى منذ أيام", "أن يكون الدفاع انتقامياً بعد زوال الخطر", "أن يقع ضد رجل أمن يؤدي واجبه مشروعاً"], answer: 0 },
+      { id: 25, category: "مادة الجرائم", question: "25- «موانع المسؤولية الجنائية» تؤدي إلى:", options: ["انتفاء المسؤولية أو الإعفاء منها لعدم توافر الإدراك أو الإرادة (كالجنون أو الصغر غير المميز)", "مضاعفة العقوبة تلقائياً", "تحويل الجريمة إلى نص قانوني جديد", "إلغاء المحاكم الجزائية"], answer: 0 },
+      { id: 26, category: "مادة الجرائم", question: "26- «العذر القانوني المخفف» يترتب عليه:", options: ["تخفيف العقوبة المقررة للجريمة وفق ما يحدده القانون", "إعدام المتهم وجوباً", "منع الطعن بالاستئناف", "إسقاط الحق المدني دون سبب"], answer: 0 },
+      { id: 27, category: "مادة الجرائم", question: "27- «الظرف المشدد» في الجريمة يؤدي إلى:", options: ["تشديد العقوبة المقررة لتوافر ملابسات تزيد من جسامة الفعل أو خطورة الجاني", "إعفاء الجاني من أي مسؤولية", "تحويل الجريمة إلى مخالفة بسيطة", "إغلاق ملف التحقيق فوراً"], answer: 0 },
+      { id: 28, category: "مادة الجرائم", question: "28- تُعد «السرقة» جريمة واقعة على:", options: ["الأموال المنقولة المملوكة للغير خلسة أو قسراً", "العقارات الثابتة فقط دون نقل أي شيء", "الأسرار العسكرية فقط", "الحقوق المعنوية للمؤلف فقط"], answer: 0 },
+      { id: 29, category: "مادة الجرائم", question: "29- يختلف «الاحتيال (النصب)» عن «السرقة» بأن المحتال:", options: ["يستولي على مال الغير بالاحتيال والخداع وإيهامه بواقعة كاذبة لتسليمه بإرادته المعيبة", "يأخذ المال خلسة دون علم صاحبه أبداً", "لا يستخدم أي وسيلة خداع", "يستولي على أمواله الخاصة"], answer: 0 },
+      { id: 30, category: "مادة الجرائم", question: "30- تقوم جريمة «خيانة الأمانة» عندما:", options: ["يختلس شخص أو يبدد مالاً منقولاً سُلّم إليه على سبيل الأمانة أو الوديعة أو الإجارة أو الوكالة إضراراً بمالكه", "يعتدي على شخص في الطريق العام", "يزور عملة رسمية", "يخالف إشارة مرور"], answer: 0 },
+      { id: 31, category: "مادة الجرائم", question: "31- «التزوير» هو:", options: ["تغيير الحقيقة في محرر بإحدى الطرق التي نص عليها القانون بقصد الإضرار وإمكانية حصول الضرر", "إتلاف سيارة بحادث مروري", "تأخير سداد دين مدني", "إلقاء خطاب سياسي"], answer: 0 },
+      { id: 32, category: "مادة الجرائم", question: "32- تهدف «العقوبة» في السياسة الجنائية الحديثة إلى:", options: ["الردع العام والخاص وإصلاح وتأهيل الجاني وحماية المجتمع", "الانتقام الشخصي من المتهم", "تعطيل القوانين", "إثراء خزينة الدولة فقط"], answer: 0 },
+      { id: 33, category: "مادة الجرائم", question: "33- من أسباب «انقضاء الدعوى الجزائية» أو سقوط العقوبة في الحالات المقررة قانوناً:", options: ["وفاة المتهم، أو التقادم، أو العفو العام، أو صدور حكم بات سابق", "تغيير لون ملابس المتهم", "سفر الشاهد إلى محافظة أخرى", "تبديل اسم المحامي"], answer: 0 }
+    ];
+
+    let customQuestions = [];
+    let activeQuizQuestions = [];
+    let currentQuestionIndex = 0;
+    let quizScore = 0;
+
+    function normalizePhone(phone) {
+      return (phone || "").trim().replace(/[\s\-()]/g, "");
+    }
+
+    function safeParseJSON(raw, fallback) {
+      try {
+        return JSON.parse(raw);
+      } catch (_) {
+        return fallback;
+      }
+    }
+
+    function loadPermanentVault() {
+      const vault = safeParseJSON(localStorage.getItem(PERMANENT_PHONE_VAULT_KEY) || "{}", {});
+      return vault && typeof vault === "object" ? vault : {};
+    }
+
+    function savePermanentVault(vault) {
+      localStorage.setItem(PERMANENT_PHONE_VAULT_KEY, JSON.stringify(vault));
+    }
+
+    function persistForeverByPhone(profile) {
+      if (!profile || !profile.phone) return null;
+      const clean = normalizePhone(profile.phone);
+      const vault = loadPermanentVault();
+      const prev = vault[clean] || {};
+      const bestXP = Math.max(Number(prev.xp || 0), Number(profile.xp || 0));
+      const permanentRecord = {
+        ...prev,
+        ...profile,
+        phone: clean,
+        name: (profile.name && profile.name.trim()) ? profile.name.trim() : (prev.name || "طالب"),
+        avatar: profile.avatar || prev.avatar || "",
+        xp: bestXP,
+        level: calculateLevelFromXP(bestXP),
+        isLocked: Boolean(profile.isLocked ?? prev.isLocked ?? false),
+        createdAt: profile.createdAt || prev.createdAt || new Date().toISOString(),
+        permanentUpdatedAt: new Date().toISOString()
+      };
+      vault[clean] = permanentRecord;
+      savePermanentVault(vault);
+      return permanentRecord;
+    }
+
+    function getPermanentRecord(phone) {
+      const clean = normalizePhone(phone);
+      if (!clean) return null;
+      const vault = loadPermanentVault();
+      if (vault[clean]) return vault[clean];
+
+      const map = loadPhoneRecords();
+      if (map[clean]) return persistForeverByPhone(map[clean]);
+
+      const locked = getLockedAccount(clean);
+      if (locked) return persistForeverByPhone(locked);
+
+      const listItem = loadRegisteredAccounts().find((a) => normalizePhone(a.phone) === clean);
+      if (listItem) return persistForeverByPhone(listItem);
+
+      return null;
+    }
+
+    function loadPhoneRecords() {
+      const map = safeParseJSON(localStorage.getItem(PHONE_RECORDS_KEY) || "{}", {});
+      return map && typeof map === "object" ? map : {};
+    }
+
+    function savePhoneRecords(map) {
+      localStorage.setItem(PHONE_RECORDS_KEY, JSON.stringify(map));
+    }
+
+    function savePhoneRecord(profile) {
+      if (!profile || !profile.phone) return;
+      const permanent = persistForeverByPhone(profile);
+      const clean = normalizePhone(profile.phone);
+      const map = loadPhoneRecords();
+      map[clean] = { ...permanent };
+      savePhoneRecords(map);
+      return permanent;
+    }
+
+    function getPhoneRecord(phone) {
+      const clean = normalizePhone(phone);
+      if (!clean) return null;
+      return getPermanentRecord(clean);
+    }
+
+    function loadLockedVault() {
+      const vault = safeParseJSON(localStorage.getItem(LOCKED_ACCOUNTS_KEY) || "{}", {});
+      return vault && typeof vault === "object" ? vault : {};
+    }
+
+    function saveLockedVault(vault) {
+      localStorage.setItem(LOCKED_ACCOUNTS_KEY, JSON.stringify(vault));
+    }
+
+    function saveToLockedVault(profile) {
+      if (!profile || !profile.phone) return;
+      const clean = normalizePhone(profile.phone);
+      const permanent = persistForeverByPhone({ ...profile, isLocked: true });
+      const vault = loadLockedVault();
+      vault[clean] = {
+        ...permanent,
+        isLocked: true,
+        savedAt: new Date().toISOString()
+      };
+      saveLockedVault(vault);
+      savePhoneRecord(vault[clean]);
+    }
+
+    function removeFromLockedVault(phone) {
+      const clean = normalizePhone(phone);
+      const vault = loadLockedVault();
+      if (vault[clean]) {
+        delete vault[clean];
+        saveLockedVault(vault);
+      }
+    }
+
+    function getLockedAccount(phone) {
+      const clean = normalizePhone(phone);
+      const vault = loadLockedVault();
+      return vault[clean] || null;
+    }
+
+    function syncLockedNameForPhone() {
+      const phoneInput = document.getElementById("phone-input");
+      const nameInput = document.getElementById("full-name-input");
+      const noticeEl = document.getElementById("locked-name-notice");
+      if (!phoneInput || !nameInput) return;
+
+      const clean = normalizePhone(phoneInput.value);
+      const savedRec = getPermanentRecord(clean);
+
+      if (savedRec && savedRec.name) {
+        nameInput.value = savedRec.name;
+        nameInput.readOnly = true;
+        if (noticeEl) {
+          noticeEl.style.display = "block";
+          noticeEl.textContent = `🔒 الاسم «${savedRec.name}» محفوظ دائماً لهذا الرقم (${clean}) ولا يتغير إلا من داخل الحساب.`;
+        }
+      } else {
+        nameInput.readOnly = false;
+        if (noticeEl) {
+          noticeEl.style.display = "none";
+          noticeEl.textContent = "";
+        }
+      }
+    }
+
+    function loadRegisteredAccounts() {
+      const list = safeParseJSON(localStorage.getItem(ACCOUNTS_LIST_KEY) || "[]", []);
+      const baseList = Array.isArray(list) ? list : [];
+      const permanentMap = loadPermanentVault();
+      const merged = [...baseList];
+
+      Object.values(permanentMap).forEach((perm) => {
+        if (!perm || !perm.phone) return;
+        const idx = merged.findIndex((item) => normalizePhone(item.phone) === normalizePhone(perm.phone));
+        if (idx >= 0) {
+          merged[idx] = { ...merged[idx], ...perm };
+        } else {
+          merged.push(perm);
+        }
+      });
+
+      return merged;
+    }
+
+    function saveRegisteredAccounts(list) {
+      localStorage.setItem(ACCOUNTS_LIST_KEY, JSON.stringify(list));
+    }
+
+    function upsertAccountInList(profile) {
+      if (!profile || !profile.phone) return;
+      const cleanPhone = normalizePhone(profile.phone);
+      const permanent = persistForeverByPhone(profile);
+      const lockedRecord = getLockedAccount(cleanPhone);
+      const isLocked = Boolean(profile.isLocked ?? (lockedRecord ? true : permanent.isLocked));
+
+      const list = loadRegisteredAccounts();
+      const idx = list.findIndex((item) => normalizePhone(item.phone) === cleanPhone);
+      const record = {
+        ...permanent,
+        uid: profile.uid || permanent.uid || "",
+        name: permanent.name || "طالب",
+        phone: cleanPhone,
+        avatar: profile.avatar || permanent.avatar || "",
+        xp: permanent.xp,
+        level: permanent.level,
+        isLocked,
+        lastActiveAt: new Date().toISOString()
+      };
+
+      persistForeverByPhone(record);
+      savePhoneRecord(record);
+
+      if (idx >= 0) {
+        list[idx] = { ...list[idx], ...record };
+      } else {
+        list.unshift(record);
+      }
+      saveRegisteredAccounts(list);
+
+      if (record.isLocked) {
+        saveToLockedVault(record);
+      }
+      renderRegisteredAccountsList();
+    }
+
+    function toggleAccountLock(phone) {
+      const cleanPhone = normalizePhone(phone);
+      const list = loadRegisteredAccounts();
+      const idx = list.findIndex((a) => normalizePhone(a.phone) === cleanPhone);
+      let acc = idx >= 0 ? list[idx] : getPermanentRecord(cleanPhone);
+      if (!acc && currentUserProfile && normalizePhone(currentUserProfile.phone) === cleanPhone) {
+        acc = currentUserProfile;
+      }
+      if (!acc) return;
+
+      const nextLocked = !Boolean(acc.isLocked);
+      const updated = persistForeverByPhone({ ...acc, phone: cleanPhone, isLocked: nextLocked, lastActiveAt: new Date().toISOString() });
+
+      savePhoneRecord(updated);
+
+      if (idx >= 0) {
+        list[idx] = updated;
+      } else {
+        list.unshift(updated);
+      }
+      saveRegisteredAccounts(list);
+
+      if (nextLocked) {
+        saveToLockedVault(updated);
+      } else {
+        removeFromLockedVault(cleanPhone);
+      }
+
+      if (currentUserProfile && normalizePhone(currentUserProfile.phone) === cleanPhone) {
+        currentUserProfile = updated;
+        localStorage.setItem(ACTIVE_USER_KEY, JSON.stringify(currentUserProfile));
+        renderHeaderProfile();
+      }
+
+      renderRegisteredAccountsList();
+    }
+
+    function loadActiveUser() {
+      return safeParseJSON(localStorage.getItem(ACTIVE_USER_KEY) || "null", null);
+    }
+
+    function saveActiveUser(profile) {
+      if (!profile) return;
+      const saved = persistForeverByPhone(profile) || profile;
+      savePhoneRecord(saved);
+      localStorage.setItem(ACTIVE_USER_KEY, JSON.stringify(saved));
+      upsertAccountInList(saved);
+    }
+
+    function renderRegisteredAccountsList() {
+      const container = document.getElementById("registered-accounts-list");
+      if (!container) return;
+      const list = loadRegisteredAccounts();
+
+      if (!list.length) {
+        container.innerHTML = `<p style="color: var(--muted);">لا توجد حسابات مسجلة بعد.</p>`;
+        return;
+      }
+
+      container.innerHTML = list.map((acc) => {
+        const isCurrent = currentUserProfile && normalizePhone(currentUserProfile.phone) === normalizePhone(acc.phone);
+        const isLocked = Boolean(acc.isLocked);
+        const avatarHtml = acc.avatar
+          ? `<img src="${acc.avatar}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;" />`
+          : (acc.name || "👤").slice(0, 1);
+
+        return `
+          <div class="account-item ${isCurrent ? "active-acc" : ""}">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div class="avatar">${avatarHtml}</div>
+              <div>
+                <div style="font-weight:700; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <span>${acc.name}</span>
+                  ${isCurrent ? `<span class="badge-active">الحساب النشط حالياً</span>` : ""}
+                  <span style="font-size:0.78rem; padding:2px 8px; border-radius:999px; border:1px solid var(--border); color:${isLocked ? "var(--accent)" : "var(--warning)"};">
+                    ${isLocked ? "🔒 مقفل (محفوظ دائماً)" : "🔓 محفوظ بالرقم"}
+                  </span>
+                </div>
+                <div style="color:var(--muted); font-size:0.86rem;">${acc.phone}</div>
+                <div style="font-size:0.85rem; margin-top:2px;">
+                  المستوى: <strong>${acc.level}</strong> / 100 — الخبرة: <strong>${acc.xp} XP</strong>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+              <button class="btn btn-sm ${isLocked ? "btn-warning" : "btn-secondary"}" onclick="toggleAccountLock('${acc.phone}')">
+                ${isLocked ? "🔓 فتح الحساب" : "🔒 قفل الحساب"}
+              </button>
+              ${!isCurrent ? `<button class="btn btn-accent btn-sm" onclick="switchToAccount('${acc.phone}')">دخول للحساب</button>` : ""}
+              <button class="btn btn-danger btn-sm" onclick="deleteAccountFromList('${acc.phone}')">حذف</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function switchToAccount(phone) {
+      const cleanPhone = normalizePhone(phone);
+      const target = getPermanentRecord(cleanPhone);
+      if (!target) return;
+      currentUserProfile = { ...target, lastActiveAt: new Date().toISOString() };
+      saveActiveUser(currentUserProfile);
+      renderHeaderProfile();
+      renderRegisteredAccountsList();
+    }
+
+    function deleteAccountFromList(phone) {
+      const cleanPhone = normalizePhone(phone);
+      const filtered = loadRegisteredAccounts().filter((a) => normalizePhone(a.phone) !== cleanPhone);
+      saveRegisteredAccounts(filtered);
+      removeFromLockedVault(cleanPhone);
+
+      const permVault = loadPermanentVault();
+      if (permVault[cleanPhone]) {
+        delete permVault[cleanPhone];
+        savePermanentVault(permVault);
+      }
+
+      if (currentUserProfile && normalizePhone(currentUserProfile.phone) === cleanPhone) {
+        if (filtered.length > 0) {
+          currentUserProfile = filtered[0];
+          saveActiveUser(currentUserProfile);
+          renderHeaderProfile();
+        } else {
+          localStorage.removeItem(ACTIVE_USER_KEY);
+          currentUserProfile = null;
+          document.getElementById("app-section").style.display = "none";
+          document.getElementById("auth-section").style.display = "block";
+          syncLockedNameForPhone();
+          backToPhoneStep();
+        }
+      }
+      renderRegisteredAccountsList();
+    }
+
+    function openAddNewAccountScreen() {
+      document.getElementById("app-section").style.display = "none";
+      document.getElementById("auth-section").style.display = "block";
+      document.getElementById("phone-input").value = "+964";
+      document.getElementById("full-name-input").value = "";
+      document.getElementById("full-name-input").readOnly = false;
+      syncLockedNameForPhone();
+      backToPhoneStep();
+    }
+
+    function getRateState() {
+      let timestamps = safeParseJSON(localStorage.getItem(RATE_STORAGE_KEY) || "[]", []);
+      if (!Array.isArray(timestamps)) timestamps = [];
+      return { used: timestamps.length, timestamps };
+    }
+
+    function recordLoginAttempt() {
+      const state = getRateState();
+      state.timestamps.push(Date.now());
+      localStorage.setItem(RATE_STORAGE_KEY, JSON.stringify(state.timestamps));
+      updateAttemptsUI();
+    }
+
+    function updateAttemptsUI() {
+      const state = getRateState();
+      const el = document.getElementById("attempts-remaining");
+      if (el) el.textContent = `المحاولات المنفذة: ${state.used} (غير نهائي ∞)`;
+      const sendBtn = document.getElementById("send-otp-btn");
+      if (sendBtn && document.getElementById("step-phone").style.display !== "none") {
+        sendBtn.disabled = false;
+      }
+    }
+
+    function showAuthError(msg) {
+      const errEl = document.getElementById("auth-error");
+      const okEl = document.getElementById("auth-success");
+      okEl.style.display = "none";
+      errEl.textContent = msg;
+      errEl.style.display = "block";
+    }
+
+    function showAuthSuccess(msg) {
+      const errEl = document.getElementById("auth-error");
+      const okEl = document.getElementById("auth-success");
+      errEl.style.display = "none";
+      okEl.textContent = msg;
+      okEl.style.display = "block";
+    }
+
+    function isValidRealPhone(phone) {
+      return /^\+[1-9]\d{7,14}$/.test(phone);
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function requestPhoneOTP() {
+      try {
+        initFirebaseSafely();
+
+        const rawPhone = normalizePhone(document.getElementById("phone-input").value);
+        if (!isValidRealPhone(rawPhone)) {
+          recordLoginAttempt();
+          showAuthError("يرجى إدخال رقم هاتف حقيقي وصحيح مسبوقاً برمز الدولة (مثال: +9647776525482).");
+          return;
+        }
+
+        const existingRec = getPermanentRecord(rawPhone);
+        const fullName = existingRec && existingRec.name
+          ? existingRec.name
+          : document.getElementById("full-name-input").value.trim();
+
+        if (!existingRec && fullName.length < 3) {
+          showAuthError("يرجى إدخال الاسم الحقيقي الكامل (3 أحرف على الأقل).");
+          return;
+        }
+
+        const avatarFile = document.getElementById("avatar-input").files[0];
+        pendingAvatarDataUrl = avatarFile ? await readFileAsDataUrl(avatarFile) : "";
+
+        recordLoginAttempt();
+        pendingPhoneNumber = rawPhone;
+
+        const sendBtn = document.getElementById("send-otp-btn");
+        sendBtn.disabled = true;
+        sendBtn.textContent = "⏳ جاري إرسال الكود...";
+
+        if (firebaseAuthInstance && window.location.protocol !== "file:") {
+          if (!window.recaptchaVerifier) {
+            window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier("recaptcha-container", {
+              size: "invisible"
+            }, firebaseAuthInstance.app);
+          }
+          confirmationResultObj = await firebaseAuthInstance.signInWithPhoneNumber(pendingPhoneNumber, window.recaptchaVerifier);
+          showAuthSuccess("تم إرسال كود التحقق إلى رقمك: " + pendingPhoneNumber);
+        } else {
+          const arr = new Uint32Array(1);
+          window.crypto.getRandomValues(arr);
+          simulatedOTPCode = String(100000 + (arr[0] % 900000));
+          showAuthSuccess(`رمز التحقق التجريبي: ${simulatedOTPCode}`);
+        }
+
+        document.getElementById("otp-hint").textContent = `تم إرسال رمز مكون من 6 أرقام إلى ${pendingPhoneNumber}`;
+        document.getElementById("step-phone").style.display = "none";
+        document.getElementById("step-otp").style.display = "block";
+      } catch (err) {
+        console.error("OTP Error:", err);
+        if (window.recaptchaVerifier && typeof window.recaptchaVerifier.clear === "function") {
+          try { window.recaptchaVerifier.clear(); } catch (_) {}
+          window.recaptchaVerifier = null;
+        }
+        showAuthError("تعذر إرسال الكود: " + (err && err.message ? err.message : "تأكد من إعدادات Firebase."));
+      } finally {
+        const sendBtn = document.getElementById("send-otp-btn");
+        if (sendBtn) {
+          sendBtn.disabled = false;
+          sendBtn.textContent = "📲 إرسال كود التحقق إلى الرقم";
+        }
+        updateAttemptsUI();
+      }
+    }
+
+    async function verifyPhoneOTP() {
+      const code = document.getElementById("otp-input").value.trim();
+      if (!/^\d{6}$/.test(code)) {
+        showAuthError("يرجى إدخال رمز تحقق مكوّن من 6 أرقام.");
+        return;
+      }
+
+      try {
+        let uid = "";
+        if (confirmationResultObj) {
+          const cred = await confirmationResultObj.confirm(code);
+          uid = cred && cred.user ? cred.user.uid : "";
+        } else if (code !== simulatedOTPCode) {
+          showAuthError("رمز التحقق غير صحيح. حاول مرة أخرى.");
+          return;
+        }
+
+        const existingInList = getPermanentRecord(pendingPhoneNumber);
+        const lockedOrEnteredName = existingInList && existingInList.name
+          ? existingInList.name
+          : document.getElementById("full-name-input").value.trim();
+
+        currentUserProfile = persistForeverByPhone({
+          uid: uid || (existingInList ? existingInList.uid : ""),
+          name: lockedOrEnteredName || "طالب",
+          phone: pendingPhoneNumber,
+          avatar: pendingAvatarDataUrl || (existingInList ? existingInList.avatar : "") || "",
+          xp: existingInList ? existingInList.xp : 0,
+          level: existingInList ? existingInList.level : 1,
+          isLocked: Boolean(existingInList && existingInList.isLocked),
+          createdAt: existingInList && existingInList.createdAt ? existingInList.createdAt : new Date().toISOString()
+        });
+
+        saveActiveUser(currentUserProfile);
+        enterPlatform();
+      } catch (err) {
+        console.error("Verify OTP Error:", err);
+        showAuthError("فشل التحقق من الرمز: " + (err && err.message ? err.message : "الرمز غير صحيح."));
+      }
+    }
+
+    function backToPhoneStep() {
+      document.getElementById("step-otp").style.display = "none";
+      document.getElementById("step-phone").style.display = "block";
+      document.getElementById("otp-input").value = "";
+      syncLockedNameForPhone();
+      updateAttemptsUI();
+    }
+
+    function calculateLevelFromXP(xp) {
+      return Math.min(100, Math.max(1, Math.floor(xp / 100) + 1));
+    }
+
+    function addXP(points) {
+      if (!currentUserProfile) return;
+      currentUserProfile.xp += points;
+      currentUserProfile.level = calculateLevelFromXP(currentUserProfile.xp);
+      saveActiveUser(currentUserProfile);
+      renderHeaderProfile();
+    }
+
+    function renderHeaderProfile() {
+      if (!currentUserProfile) return;
+      document.getElementById("header-name").textContent = currentUserProfile.name;
+      document.getElementById("header-phone").textContent = currentUserProfile.phone;
+      document.getElementById("header-level").textContent = currentUserProfile.level;
+      document.getElementById("header-xp").textContent = currentUserProfile.xp;
+
+      const xpInCurrentLevel = currentUserProfile.xp % 100;
+      document.getElementById("header-xp-bar").style.width = `${currentUserProfile.level >= 100 ? 100 : xpInCurrentLevel}%`;
+
+      const avatarEl = document.getElementById("header-avatar");
+      if (currentUserProfile.avatar) {
+        avatarEl.innerHTML = `<img src="${currentUserProfile.avatar}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;" />`;
+      } else {
+        avatarEl.textContent = currentUserProfile.name.slice(0, 1) || "👤";
+      }
+
+      document.getElementById("edit-name-input").value = currentUserProfile.name;
+      document.getElementById("profile-stats").textContent =
+        `الحساب النشط: ${currentUserProfile.phone} | الاسم ومعلومات الرقم محفوظة دائماً | المستوى: ${currentUserProfile.level} من 100 | XP: ${currentUserProfile.xp}`;
+    }
+
+    function enterPlatform() {
+      document.getElementById("auth-section").style.display = "none";
+      document.getElementById("app-section").style.display = "block";
+      renderHeaderProfile();
+      renderRegisteredAccountsList();
+      if (!activeQuizQuestions.length) {
+        startQuizSession();
+      }
+    }
+
+    function logoutUser() {
+      if (firebaseAuthInstance) {
+        firebaseAuthInstance.signOut().catch(() => {});
+      }
+
+      if (currentUserProfile && currentUserProfile.phone) {
+        const permanent = persistForeverByPhone(currentUserProfile);
+        if (permanent.isLocked) {
+          saveToLockedVault(permanent);
+        }
+        upsertAccountInList(permanent);
+      }
+
+      localStorage.removeItem(ACTIVE_USER_KEY);
+      currentUserProfile = null;
+      activeQuizQuestions = [];
+      document.getElementById("app-section").style.display = "none";
+      document.getElementById("auth-section").style.display = "block";
+      syncLockedNameForPhone();
+      backToPhoneStep();
+      renderRegisteredAccountsList();
+    }
+
+    function applySavedTheme() {
+      const saved = localStorage.getItem(THEME_STORAGE_KEY);
+      if (saved === "light") document.body.classList.add("light-theme");
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle("light-theme");
+      localStorage.setItem(THEME_STORAGE_KEY, document.body.classList.contains("light-theme") ? "light" : "dark");
+    }
+
+    function switchTab(tabName, btnEl) {
+      document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
+      document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+      document.getElementById(`tab-${tabName}`).classList.add("active");
+      if (btnEl) btnEl.classList.add("active");
+      if (tabName === "quiz" && !activeQuizQuestions.length) {
+        startQuizSession();
+      }
+      if (tabName === "accounts") {
+        renderRegisteredAccountsList();
+      }
+    }
+
+    function getRequestedQuestionCount() {
+      const input = document.getElementById("quiz-count-input");
+      let val = parseInt(input ? input.value : "5", 10);
+      if (Number.isNaN(val) || val < 1) val = 1;
+      if (input) input.value = val;
+      return val;
+    }
+
+    function startQuizSession() {
+      const pool = [...BASE_QUESTIONS, ...customQuestions];
+      const count = getRequestedQuestionCount();
+      const infoEl = document.getElementById("quiz-pool-info");
+
+      if (!pool.length) {
+        document.getElementById("quiz-container").innerHTML = "<p>لا توجد أسئلة متاحة حالياً.</p>";
+        return;
+      }
+
+      const shuffled = [...pool].sort(() => Math.random() - 0.5);
+      const selected = [];
+      for (let i = 0; i < count; i++) {
+        const baseItem = shuffled[i % shuffled.length];
+        selected.push({
+          ...baseItem,
+          sessionIndex: i + 1
+        });
+      }
+
+      activeQuizQuestions = selected;
+      currentQuestionIndex = 0;
+      quizScore = 0;
+
+      if (infoEl) {
+        infoEl.textContent = count > pool.length
+          ? `تم توليد ${count} أسئلة (من بنك يضم ${pool.length} سؤالاً)`
+          : `الاختبار الحالي: ${count} أسئلة من أصل ${pool.length}`;
+      }
+
+      renderCurrentQuestion();
+    }
+
+    function renderCurrentQuestion() {
+      const container = document.getElementById("quiz-container");
+      if (!container) return;
+
+      if (currentQuestionIndex >= activeQuizQuestions.length) {
+        const earnedXP = quizScore * 25;
+        addXP(earnedXP);
+        container.innerHTML = `
+          <div style="text-align:center; padding: 18px;">
+            <h3>🎉 انتهى الاختبار!</h3>
+            <p style="margin: 10px 0;">نتيجتك: <strong>${quizScore}</strong> من <strong>${activeQuizQuestions.length}</strong></p>
+            <p style="color: var(--accent); font-weight: 700;">+${earnedXP} XP تمت إضافتها إلى حسابك!</p>
+            <button class="btn" style="margin-top: 14px;" onclick="startQuizSession()">ابدأ جولة جديدة</button>
+          </div>
+        `;
+        return;
+      }
+
+      const q = activeQuizQuestions[currentQuestionIndex];
+      container.innerHTML = `
+        <div style="color: var(--muted); font-size: 0.85rem; margin-bottom: 6px;">
+          السؤال ${currentQuestionIndex + 1} من ${activeQuizQuestions.length} — ${q.category}
+        </div>
+        <h4 style="margin-bottom: 10px;">${q.question}</h4>
+        <div>
+          ${q.options.map((opt, idx) => `
+            <label class="mcq-option">
+              <input type="radio" name="mcq-choice" value="${idx}" style="width:auto; margin:0;" />
+              <span>${opt}</span>
+            </label>
+          `).join("")}
+        </div>
+        <div id="quiz-feedback" style="margin-top: 10px; font-weight: 600;"></div>
+        <button id="quiz-submit-btn" class="btn" style="margin-top: 12px;" onclick="submitQuizAnswer()">تحقق من الإجابة</button>
+      `;
+    }
+
+    function submitQuizAnswer() {
+      const selected = document.querySelector('input[name="mcq-choice"]:checked');
+      const feedback = document.getElementById("quiz-feedback");
+      const btn = document.getElementById("quiz-submit-btn");
+      if (!selected) {
+        feedback.style.color = "var(--warning)";
+        feedback.textContent = "يرجى اختيار إجابة أولاً.";
+        return;
+      }
+      if (btn) btn.disabled = true;
+      const chosenIdx = Number(selected.value);
+      const q = activeQuizQuestions[currentQuestionIndex];
+      if (chosenIdx === q.answer) {
+        quizScore++;
+        feedback.style.color = "var(--accent)";
+        feedback.textContent = "✅ إجابة صحيحة!";
+      } else {
+        feedback.style.color = "var(--danger)";
+        feedback.textContent = `❌ إجابة غير صحيحة. الإجابة الصحيحة هي: ${q.options[q.answer]}`;
+      }
+      currentQuestionIndex++;
+      setTimeout(renderCurrentQuestion, 1000);
+    }
+
+    function toggleGeminiKeyBox() {
+      const box = document.getElementById("gemini-key-box");
+      const input = document.getElementById("gemini-api-key-input");
+      if (!box) return;
+      const isHidden = box.style.display === "none";
+      box.style.display = isHidden ? "block" : "none";
+      if (isHidden && input) {
+        input.value = localStorage.getItem(GEMINI_KEY_STORAGE) || "";
+      }
+    }
+
+    function saveGeminiApiKey() {
+      const input = document.getElementById("gemini-api-key-input");
+      const key = (input ? input.value : "").trim();
+      if (!key) {
+        localStorage.removeItem(GEMINI_KEY_STORAGE);
+        appendChatMessage("تم حذف مفتاح Gemini API.", "ai");
+        return;
+      }
+      localStorage.setItem(GEMINI_KEY_STORAGE, key);
+      document.getElementById("gemini-key-box").style.display = "none";
+      appendChatMessage("تم حفظ مفتاح Gemini API بنجاح. يمكنك الآن طرح أي سؤال ليتم الرد عليه بالذكاء الاصطناعي الحقيقي.", "ai");
+    }
+
+    function appendChatMessage(text, sender) {
+      const box = document.getElementById("chat-box");
+      const div = document.createElement("div");
+      div.className = `msg ${sender === "user" ? "msg-user" : "msg-ai"}`;
+      div.textContent = text;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function callRealGeminiAI(promptText) {
+      const apiKey = (localStorage.getItem(GEMINI_KEY_STORAGE) || "").trim();
+      if (!apiKey) {
+        return "لم يتم ضبط مفتاح Gemini API بعد. اضغط على زر «إعداد مفتاح الذكاء الاصطناعي» بالأعلى وأدخل مفتاح Gemini الخاص بك لتفعيل الذكاء الاصطناعي الحقيقي المباشر.";
+      }
+
+      const contents = [
+        ...chatHistory.slice(-8),
+        { role: "user", parts: [{ text: promptText }] }
+      ];
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: {
+              parts: [{
+                text: "أنت مساعد تعليمي ذكي داخل منصة Smart Educational Platform. أجب بوضوح ودقة وباللغة العربية، واشرح المفاهيم الدراسية والقانونية والبرمجية بأسلوب منظم ومفيد."
+              }]
+            },
+            contents
+          })
+        }
+      );
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData?.error?.message || `HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      const reply = data?.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("").trim();
+      if (!reply) {
+        throw new Error("لم يرجع النموذج نصاً.");
+      }
+
+      chatHistory.push({ role: "user", parts: [{ text: promptText }] });
+      chatHistory.push({ role: "model", parts: [{ text: reply }] });
+      return reply;
+    }
+
+    async function sendAIMessage() {
+      const input = document.getElementById("ai-input");
+      const sendBtn = document.getElementById("ai-send-btn");
+      const text = input.value.trim();
+      if (!text) return;
+
+      input.value = "";
+      appendChatMessage(text, "user");
+      if (sendBtn) sendBtn.disabled = true;
+
+      const loadingMsg = document.createElement("div");
+      loadingMsg.className = "msg msg-ai";
+      loadingMsg.textContent = "⏳ جاري التفكير والرد من الذكاء الاصطناعي...";
+      const box = document.getElementById("chat-box");
+      box.appendChild(loadingMsg);
+      box.scrollTop = box.scrollHeight;
+
+      try {
+        const reply = await callRealGeminiAI(text);
+        loadingMsg.remove();
+        appendChatMessage(reply, "ai");
+        addXP(5);
+      } catch (err) {
+        loadingMsg.remove();
+        appendChatMessage(`تعذر الاتصال بالذكاء الاصطناعي: ${err.message}`, "ai");
+      } finally {
+        if (sendBtn) sendBtn.disabled = false;
+      }
+    }
+
+    async function handleMCQFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      if (file.type.startsWith("text/") || file.name.endsWith(".txt")) {
+        document.getElementById("mcq-source-text").value = await file.text();
+      } else {
+        document.getElementById("mcq-source-text").value =
+          `تم إرفاق الصورة (${file.name}). أضف أو عدّل النقاط الرئيسية المستخرجة من الصورة هنا لتوليد أسئلة MCQ دقيقة منها.`;
+      }
+    }
+
+    function generateMCQFromSource() {
+      const rawText = document.getElementById("mcq-source-text").value.trim();
+      const countInput = document.getElementById("mcq-count-input");
+      let count = parseInt(countInput ? countInput.value : "5", 10);
+      if (Number.isNaN(count) || count < 1) count = 1;
+      if (countInput) countInput.value = count;
+
+      if (!rawText) {
+        alert("يرجى إدخال نص أو رفع ملف أولاً.");
+        return;
+      }
+
+      const sentences = rawText
+        .split(/[.!؟\n]+/)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 10);
+
+      const generated = [];
+      for (let i = 0; i < count; i++) {
+        const snippet = sentences[i % Math.max(1, sentences.length)] || rawText.slice(0, 90);
+        const cleanSnippet = snippet.slice(0, 110);
+        generated.push({
+          id: Date.now() + i,
+          category: "أسئلة مولّدة (MCQ)",
+          question: `سؤال مولّد ${i + 1}: أي عبارة تعبّر بدقة عن المفهوم الوارد في النص (${cleanSnippet})؟`,
+          options: [
+            cleanSnippet,
+            "عبارة تناقض مضمون النص الأصلي تماماً",
+            "مفهوم لا صلة له بالموضوع المذكور",
+            "حالة استثنائية غير واردة في النص"
+          ],
+          answer: 0
+        });
+      }
+
+      customQuestions.push(...generated);
+      document.getElementById("quiz-count-input").value = count;
+      addXP(15);
+
+      const preview = document.getElementById("generated-mcq-preview");
+      preview.innerHTML = `
+        <div style="color: var(--accent); font-weight: 700; margin-bottom: 8px;">
+          ✅ تم توليد ${generated.length} أسئلة وإضافتها إلى قائمة الاختبارات (+15 XP)!
+        </div>
+        ${generated.map((item) => `
+          <div class="card" style="padding: 12px; margin-bottom: 10px;">
+            <div><strong>${item.question}</strong></div>
+            <div style="color: var(--muted); font-size: 0.88rem; margin-top: 4px;">الإجابة الصحيحة: ${item.options[item.answer]}</div>
+          </div>
+        `).join("")}
+      `;
+    }
+
+    async function handleEditAvatar(event) {
+      const file = event.target.files[0];
+      if (!file || !currentUserProfile) return;
+      currentUserProfile.avatar = await readFileAsDataUrl(file);
+      saveActiveUser(currentUserProfile);
+      renderHeaderProfile();
+    }
+
+    function saveProfileChanges() {
+      if (!currentUserProfile) return;
+      const newName = document.getElementById("edit-name-input").value.trim();
+      if (newName.length < 3) {
+        alert("يرجى إدخال اسم صحيح.");
+        return;
+      }
+      currentUserProfile.name = newName;
+      saveActiveUser(currentUserProfile);
+      renderHeaderProfile();
+      syncLockedNameForPhone();
+      alert("تم حفظ بيانات الملف الشخصي والاسم المرتبط بالرقم بشكل دائم.");
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      initFirebaseSafely();
+      applySavedTheme();
+      updateAttemptsUI();
+      syncLockedNameForPhone();
+      renderRegisteredAccountsList();
+
+      const activeUser = loadActiveUser();
+      if (activeUser && activeUser.phone) {
+        const cleanPhone = normalizePhone(activeUser.phone);
+        const permanent = getPermanentRecord(cleanPhone);
+        currentUserProfile = persistForeverByPhone({
+          ...(permanent || {}),
+          ...activeUser,
+          phone: cleanPhone
+        });
+        upsertAccountInList(currentUserProfile);
+        enterPlatform();
+      }
+    });
+  </script>
+</body>
+</html>
